@@ -55,6 +55,8 @@ The DeepSeek-V3 weight file consists of two main components: **Main Model Weight
 - **MTP Modules**: Loaded via the `num_nextn_predict_layers` parameter, with layer IDs appended immediately after the Main Model hidden layers. For example:
   - If `num_hidden_layers = 61` and `num_nextn_predict_layers = 1`, the MTP Module's layer ID is `61`.
 
+> **Personal note**: When loading on a multi-GPU setup, I found it helpful to pin the MTP module (layer 61) to the same device as the final main model layers to avoid extra cross-device transfers during speculative decoding.
+
 ---
 
 ## FP8 Weight Documentation
@@ -78,17 +80,4 @@ The FP8 weight file introduces a `quantization_config` field to describe the qua
   - Format type: `fp8` and `e4m3` (corresponding to `torch.float8_e4m3fn`).
   - Weight block size: `128x128`.
 - **Activation Quantization Scheme**:
-  - Utilizes dynamic activation quantization (`dynamic`).
-
-### Dequantization Method
-
-The FP8 weight file includes a `weight_scale_inv` field, which stores the dequantization scale for each weight block.
-
-- **Storage Format**: `float32 Tensor`, stored alongside the weight data.
-- **Dequantization Formula**:
-  - If the weight block is not aligned to 128, it is zero-padded to 128 before calculating the scale. After quantization, the padded portion is removed.
-  - The dequantization process is performed as: `(128x128 weight block) * weight_scale_inv`.
-
-Through dequantization of the FP8 weights, runtime operations enable online quantization at a granularity of `per-token-per-128-channel`.
-
----
+  - Utilizes dynamic activation quantization
