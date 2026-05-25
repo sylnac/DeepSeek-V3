@@ -57,6 +57,8 @@ The DeepSeek-V3 weight file consists of two main components: **Main Model Weight
 
 > **Personal note**: When loading on a multi-GPU setup, I found it helpful to pin the MTP module (layer 61) to the same device as the final main model layers to avoid extra cross-device transfers during speculative decoding.
 
+> **Personal note**: If you're loading the weights on a memory-constrained machine, consider using `torch.load(..., map_location='cpu')` first and then moving layers to GPU one at a time. Trying to load directly to GPU with insufficient VRAM will OOM silently on some systems before throwing an error.
+
 ---
 
 ## FP8 Weight Documentation
@@ -73,11 +75,5 @@ The FP8 weight file introduces a `quantization_config` field to describe the qua
   "fmt": "e4m3",
   "quant_method": "fp8",
   "weight_block_size": [128, 128]
-}
-```
 
-- **Quantization Format**:
-  - Format type: `fp8` and `e4m3` (corresponding to `torch.float8_e4m3fn`).
-  - Weight block size: `128x128`.
-- **Activation Quantization Scheme**:
-  - Utilizes dynamic activation quantization
+```
